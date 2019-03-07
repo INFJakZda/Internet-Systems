@@ -20,7 +20,7 @@ public class TPSIServer {
             exchange.getResponseHeaders().set("Content-Type", "text/html");
             exchange.sendResponseHeaders(200, 0);
             OutputStream os = exchange.getResponseBody();
-            os.write(Files.readAllBytes(Paths.get("src/index.html")));
+            os.write(Files.readAllBytes(Paths.get("index.html")));
             os.close();
         }
     }
