@@ -1,3 +1,4 @@
+import com.cedarsoftware.util.io.JsonWriter;
 import com.sun.net.httpserver.*;
 
 import java.io.IOException;
@@ -11,6 +12,7 @@ public class TPSIServer {
         int port = 8000;
         HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
         server.createContext("/", new RootHandler());
+        server.createContext("/echo", new EchoHandler());
         System.out.println("Starting server on port: " + port);
         server.start();
     }
@@ -21,6 +23,20 @@ public class TPSIServer {
             exchange.sendResponseHeaders(200, 0);
             OutputStream os = exchange.getResponseBody();
             os.write(Files.readAllBytes(Paths.get("index.html")));
+            os.close();
+        }
+    }
+
+    static class EchoHandler implements HttpHandler {
+        public void handle(HttpExchange exchange) throws IOException {
+            Headers header = exchange.getRequestHeaders();
+            String json = JsonWriter.objectToJson(header);
+
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, json.getBytes().length);
+
+            OutputStream os = exchange.getResponseBody();
+            os.write(json.getBytes());
             os.close();
         }
     }
