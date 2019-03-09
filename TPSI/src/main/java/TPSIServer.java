@@ -21,6 +21,7 @@ public class TPSIServer {
         public void handle(HttpExchange exchange) throws IOException {
             exchange.getResponseHeaders().set("Content-Type", "text/html");
             exchange.sendResponseHeaders(200, 0);
+
             OutputStream os = exchange.getResponseBody();
             os.write(Files.readAllBytes(Paths.get("index.html")));
             os.close();
@@ -30,7 +31,7 @@ public class TPSIServer {
     static class EchoHandler implements HttpHandler {
         public void handle(HttpExchange exchange) throws IOException {
             Headers header = exchange.getRequestHeaders();
-            String json = JsonWriter.objectToJson(header);
+            String json = JsonWriter.formatJson(JsonWriter.objectToJson(header));
 
             exchange.getResponseHeaders().set("Content-Type", "application/json");
             exchange.sendResponseHeaders(200, json.getBytes().length);
