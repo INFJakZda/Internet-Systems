@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Base64;
@@ -68,6 +67,7 @@ public class TPSIServer {
             byte[] array = new byte[7]; // length is bounded by 7
             new Random().nextBytes(array);
             String generatedString = new String(array, Charset.forName("UTF-8"));
+            String cookieExp = "; Expires=Wed, 01 Aug 2020 00:00:00 GMT";
             generatedString = "My-Cookie=123456";
 
 
@@ -83,28 +83,38 @@ public class TPSIServer {
 
     static class BasicAuthHandler implements HttpHandler {
         public void handle(HttpExchange exchange) throws IOException {
-            Headers header = exchange.getRequestHeaders();
-            String auth = header.getFirst("Authorization");
-            System.out.println(auth);
+            exchange.getResponseHeaders().set("Content-Type", "text/plain");
 
-            if (auth == null) {
-                System.out.println("Null");
-                exchange.getResponseHeaders().set("WWW-Authenticate", "Basic");
-                exchange.sendResponseHeaders(401, 0);
-                exchange.close();
-            } else {
-                if (!auth.equals("Basic dXNlcjp1")) {
+            Headers headers = exchange.getRequestHeaders();
+
+            if (headers.containsKey("Authorization")){
+                String authorizationHeader = headers.getFirst("Authorization");
+                String encodedMessage = authorizationHeader.substring(6);
+                String decodedMessage = new String(Base64.getDecoder().decode(encodedMessage));
+
+                System.out.println(decodedMessage);
+                if (decodedMessage.equals("user:1234")){
+                    String response = "Goood!";
+                    exchange.sendResponseHeaders(200, response.length());
+                    OutputStream os = exchange.getResponseBody();
+                    os.write(response.getBytes());
+                    os.close();
+                }
+                else {
                     exchange.getResponseHeaders().set("WWW-Authenticate", "Basic");
-                    exchange.sendResponseHeaders(401, 0);
-                    exchange.close();
-                } else {
-                    basicAuthReq(exchange);
-                    return;
+                    exchange.sendResponseHeaders(401, -1);
+
                 }
             }
+            else {
+                exchange.getResponseHeaders().set("WWW-Authenticate", "Basic");
+                exchange.sendResponseHeaders(401, -1);
+            }
         }
+    }
 
-        private static void basicAuthReq(HttpExchange exchange) throws IOException {
+    static class AuthorizedSiteHandler implements HttpHandler {
+        public void handle(HttpExchange exchange) throws IOException {
             String response = "BasicAuth";
 
             exchange.getResponseHeaders().set("Content-Type", "text");
@@ -116,23 +126,6 @@ public class TPSIServer {
         }
     }
 
-//            byte[] decodedBytes = Base64.getDecoder().decode(auth);
-//            String decodedString = new String(decodedBytes);
-//            System.out.println(decodedString);
-
-//            String base64Credentials = auth.substring("Basic".length()).trim();
-//            byte[] credDecoded = Base64.getDecoder().decode(base64Credentials);
-//            String credentials = new String(credDecoded, StandardCharsets.UTF_8);
-//            // credentials = username:password
-//            final String[] values = credentials.split(":", 2);
-//            System.out.println(values[0] + values[1]);
-
-    static class AuthorizedSiteHandler implements HttpHandler {
-        public void handle(HttpExchange exchange) throws IOException {
-            BasicAuthHandler.basicAuthReq(exchange);
-        }
-    }
-
     static class MyBasicAuthenticator extends BasicAuthenticator {
         public MyBasicAuthenticator(String realm) {
             super(realm);
@@ -140,7 +133,7 @@ public class TPSIServer {
 
         @Override
         public boolean checkCredentials(String username, String pwd) {
-            return username.equals("admin") && pwd.equals("admins");
+            return username.equals("user") && pwd.equals("1234");
         }
     }
 }
