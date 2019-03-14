@@ -4,11 +4,9 @@ import com.sun.net.httpserver.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Base64;
-import java.util.Random;
 
 public class TPSIServer {
     public static void main(String[] args) throws Exception {
@@ -64,12 +62,7 @@ public class TPSIServer {
 
     static class CookieHandler implements HttpHandler {
         public void handle(HttpExchange exchange) throws IOException {
-            byte[] array = new byte[7]; // length is bounded by 7
-            new Random().nextBytes(array);
-            String generatedString = new String(array, Charset.forName("UTF-8"));
-            String cookieExp = "; Expires=Wed, 01 Aug 2020 00:00:00 GMT";
-            generatedString = "My-Cookie=123456";
-
+            String generatedString = "My-Cookie=123456; path=/echo";
 
             exchange.getResponseHeaders().set("Content-Type", "text");
             exchange.getResponseHeaders().set("Set-Cookie", generatedString);
