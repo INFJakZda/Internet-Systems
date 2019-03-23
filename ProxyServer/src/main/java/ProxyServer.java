@@ -2,12 +2,15 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
+import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URL;
+import java.util.List;
+import java.util.Map;
 
 public class ProxyServer {
     public static void main(String[] args) throws Exception {
@@ -27,10 +30,68 @@ public class ProxyServer {
             String method = exchange.getRequestMethod();
 
 
-            URL url = new URL(uri.toString());
+            //URL url = new URL(uri.toString());
+            URL url = new URL("http://wp.pl");
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
+            //set up connection properties
+            connection.setAllowUserInteraction(true);
+            connection.setDoInput(true);
+            connection.setDoOutput(true);
+            connection.setUseCaches(false);
+            //connection.setFollowRedirects(true);
+            connection.setRequestMethod(method);
 
+            for (String headerName : headers.keySet()){
+                for (String headerValue : headers.get(headerName)){
+                    connection.addRequestProperty(headerName, headerValue);
+                }
+            }
+
+            if (exchange.getRequestHeaders().containsKey("Content-Length")) {
+                if (Integer.parseInt(exchange.getRequestHeaders().get("Content-Length").get(0))>=0) {
+                    IOUtils.copy(exchange.getRequestBody(), connection.getOutputStream());
+                }
+            }
+
+            //connecting
+            connection.connect();
+            System.out.println("Connecting...");
+
+            //getting the response
+            //headers
+            Map<String, List<String>> responseHeaders = connection.getHeaderFields();
+            for (String headerName : responseHeaders.keySet()) {
+                if (headerName != null) {
+                    exchange.getRequestHeaders().put(headerName, responseHeaders.get(headerName));
+                }
+            }
+
+
+            //response code
+            int contentLength = 0;
+            try {
+                if (responseHeaders.containsKey("Content-Length")) {
+                    String contentLengthStr = responseHeaders.get("Content-Length").get(0);
+                    contentLength = Integer.parseInt(contentLengthStr);
+                }
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+            System.out.println("content length: "+contentLength);
+
+            exchange.sendResponseHeaders(connection.getResponseCode(), contentLength);
+            System.out.println(connection.getResponseCode());
+
+            //message body
+            if (200 <= connection.getResponseCode() && connection.getResponseCode() < 300) {
+                IOUtils.copy(connection.getInputStream(),exchange.getResponseBody());
+            } else {
+                IOUtils.copy(connection.getErrorStream(),exchange.getResponseBody());
+            }
+            connection.getInputStream().close();
+            exchange.getResponseBody().close();
         }
     }
 }
