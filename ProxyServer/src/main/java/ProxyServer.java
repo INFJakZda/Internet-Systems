@@ -2,12 +2,13 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
-import org.apache.commons.io.IOUtils;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
-import java.net.URI;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
@@ -22,79 +23,112 @@ public class ProxyServer {
     }
 
     static class RootHandler implements HttpHandler {
-        public void handle(HttpExchange exchange) throws IOException {
+        private HttpURLConnection connection = null;
+
+        private void setConnection(HttpExchange exchange) throws Exception {
             URL url = exchange.getRequestURI().toURL();
-            String method = exchange.getRequestMethod();
-            System.out.println(url.toString() + " " + method);
+            Headers requestHeaders = exchange.getRequestHeaders();
 
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            System.out.println("Połączenie do " + url + " \tTYP: " + exchange.getRequestMethod());
 
-            connection.setAllowUserInteraction(true);
-            connection.setDoInput(true);
-            connection.setDoOutput(true);
-            connection.setUseCaches(false);
-            connection.setFollowRedirects(false);
-            connection.setRequestMethod(method);
+            connection = (HttpURLConnection) url.openConnection();
 
-            Headers headers = exchange.getRequestHeaders();
+            // set connection methods
+            connection.setInstanceFollowRedirects(false);
+            connection.setRequestMethod(exchange.getRequestMethod());
+            connection.setRequestProperty("Via", exchange.getLocalAddress().toString());
+            connection.setRequestProperty("X-Forwarded-For", exchange.getRemoteAddress().toString());
 
-            for (String headerName : headers.keySet()){
-                for (String headerValue : headers.get(headerName)){
-                    connection.setRequestProperty(headerName, headerValue);
-//                    System.out.println(headerName + " " + headerValue);
+            // set request headers
+            for (Map.Entry<String, List<String>> entry : requestHeaders.entrySet()) {
+                String headerKey = entry.getKey();
+                List<String> headerValues = entry.getValue();
+                for (String value : headerValues) {
+                    if (headerKey != null)
+                        connection.setRequestProperty(headerKey, value);
                 }
             }
+        }
 
-            if (exchange.getRequestHeaders().containsKey("Content-Length")) {
-                if (Integer.parseInt(exchange.getRequestHeaders().get("Content-Length").get(0))>=0) {
-                    IOUtils.copy(exchange.getRequestBody(), connection.getOutputStream());
-                    System.out.println(exchange.getRequestBody());
-                }
-            }
-
-            connection.connect();
-            System.out.println("Start connect to " + url.toString());
-
-
-            //getting the response
-            //headers
-            Map<String, List<String>> responseHeaders = connection.getHeaderFields();
-            for (String headerName : responseHeaders.keySet()) {
-                if (headerName != null) {
-                    exchange.getRequestHeaders().put(headerName, responseHeaders.get(headerName));
-                }
-            }
-
-
-            //response code
-            int contentLength = 0;
+        private byte[] readAllBytes(InputStream is) {
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
             try {
-                if (responseHeaders.containsKey("Content-Length")) {
-                    String contentLengthStr = responseHeaders.get("Content-Length").get(0);
-                    contentLength = Integer.parseInt(contentLengthStr);
+                int nRead;
+                byte[] data = new byte[16384];
+                while ((nRead = is.read(data, 0, data.length)) != -1) {
+                    buffer.write(data, 0, nRead);
                 }
-            }
-            catch (Exception e) {
+                buffer.flush();
+            } catch (IOException e) {
                 e.printStackTrace();
             }
+            return buffer.toByteArray();
+        }
 
-            System.out.println(connection.getResponseCode());
-            System.out.println(connection.getInputStream());
+        private void writeRecievedResponse(HttpExchange exchange) {
+            InputStream is;
+            byte[] response = null;
+            try {
+                // check response code - error or not
+                if (connection.getResponseCode() < 400) {
+                    is = connection.getInputStream();
+                } else {
+                    is = connection.getErrorStream();
+                }
 
-            exchange.sendResponseHeaders(connection.getResponseCode(), contentLength);
-            System.out.println(connection.getResponseCode());
+                // read all bytes from response
+                if (is.available() > 0)
+                    response = readAllBytes(is);
 
-            //message body
-            if (200 <= connection.getResponseCode() && connection.getResponseCode() < 300) {
-                IOUtils.copy(connection.getInputStream(),exchange.getResponseBody());
-            } else {
-                IOUtils.copy(connection.getErrorStream(),exchange.getResponseBody());
+                // set headers from response
+                Map<String, List<String>> serverHeaders = connection.getHeaderFields();
+                for (Map.Entry<String, List<String>> entry : serverHeaders.entrySet()) {
+                    if (entry.getKey() != null && !entry.getKey().equalsIgnoreCase("Transfer-Encoding"))
+                        exchange.getResponseHeaders().set(entry.getKey(), entry.getValue().get(0));
+                }
+
+                exchange.getResponseHeaders().set("Via", exchange.getLocalAddress().toString());
+
+                // prepare length
+                long responseLength = (response != null) ? response.length : -1;
+
+                // prepare response code
+                exchange.sendResponseHeaders(connection.getResponseCode(), responseLength);
+
+                // write response
+                if (responseLength != -1) {
+                    /* write server response to client */
+                    OutputStream clientOs = exchange.getResponseBody();
+                    clientOs.write(response);
+                    clientOs.close();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-            connection.getInputStream().close();
-            exchange.getResponseBody().close();
-            connection.disconnect();
-            exchange.close();
+        }
 
+        public void handle(HttpExchange exchange) throws IOException {
+
+            try {
+                // establish connection with a server
+                setConnection(exchange);
+
+                byte[] requestBytes = readAllBytes(exchange.getRequestBody());
+
+                // when some body data write them
+                if (!exchange.getRequestMethod().equals("GET")) {
+                    connection.setDoOutput(true);
+                    OutputStream os = connection.getOutputStream();
+                    os.write(requestBytes);
+                    os.close();
+                }
+
+                // write response from a server back to user
+                writeRecievedResponse(exchange);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 }
