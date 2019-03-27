@@ -2,17 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="ad021ca5-5d28-4aea-b6d9-e8ac52a31948" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/../SerwerProxy2/.idea/compiler.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../SerwerProxy2/.idea/encodings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../SerwerProxy2/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../SerwerProxy2/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../SerwerProxy2/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../SerwerProxy2/SerwerProxy2.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../SerwerProxy2/pom.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../SerwerProxy2/src/main/java/SerwerProxy.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/ProxyServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/ProxyServer.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/ProxyServer$RootHandler.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/ProxyServer$RootHandler.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/ProxyServer.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/ProxyServer.class" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <ignored path="$PROJECT_DIR$/target/" />
@@ -27,8 +19,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main/java/ProxyServer.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1425">
-              <caret line="95" column="29" selection-start-line="95" selection-start-column="29" selection-end-line="95" selection-end-column="29" />
+            <state relative-caret-position="465">
+              <caret line="31" column="58" selection-start-line="31" selection-start-column="58" selection-end-line="31" selection-end-column="58" />
               <folding>
                 <element signature="imports" expanded="true" />
               </folding>
@@ -57,6 +49,14 @@
       </list>
     </option>
   </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>httpExchange</find>
+    </findStrings>
+    <replaceStrings>
+      <replace>exchange</replace>
+    </replaceStrings>
+  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
   </component>
@@ -76,6 +76,7 @@
     </option>
   </component>
   <component name="ProjectFrameBounds" extendedState="4">
+    <option name="x" value="960" />
     <option name="y" value="25" />
     <option name="width" value="960" />
     <option name="height" value="1055" />
@@ -130,7 +131,7 @@
   <component name="PropertiesComponent">
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="aspect.path.notification.shown" value="true" />
-    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1553519409353" />
+    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1553714338882" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/../../TPSI/zad3 - HTTPproxy" />
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
     <property name="nodejs_npm_path_reset_for_default_project" value="true" />
@@ -181,7 +182,7 @@
       <workItem from="1553541236798" duration="2026000" />
       <workItem from="1553547995175" duration="3206000" />
       <workItem from="1553555532782" duration="359000" />
-      <workItem from="1553709007326" duration="999000" />
+      <workItem from="1553709007326" duration="5175000" />
     </task>
     <task id="LOCAL-00001" summary="Add proxy server *****">
       <created>1553092759597</created>
@@ -197,15 +198,28 @@
       <option name="project" value="LOCAL" />
       <updated>1553093541786</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="Proxy server v2">
+      <created>1553710319876</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1553710319876</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Proxy server WORKING VERSION">
+      <created>1553713884098</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1553713884098</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="11717000" />
+    <option name="totallyTimeSpent" value="15893000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="25" width="960" height="1055" extended-state="4" />
-    <editor active="true" />
+    <frame x="960" y="25" width="960" height="1055" extended-state="4" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.032822758" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
@@ -244,7 +258,9 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Add proxy server *****" />
     <MESSAGE value="Prepare proxy server" />
-    <option name="LAST_COMMIT_MESSAGE" value="Prepare proxy server" />
+    <MESSAGE value="Proxy server v2" />
+    <MESSAGE value="Proxy server WORKING VERSION" />
+    <option name="LAST_COMMIT_MESSAGE" value="Proxy server WORKING VERSION" />
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/src/main/java/helper.java" />
@@ -257,8 +273,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/ProxyServer.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1425">
-          <caret line="95" column="29" selection-start-line="95" selection-start-column="29" selection-end-line="95" selection-end-column="29" />
+        <state relative-caret-position="465">
+          <caret line="31" column="58" selection-start-line="31" selection-start-column="58" selection-end-line="31" selection-end-column="58" />
           <folding>
             <element signature="imports" expanded="true" />
           </folding>
