@@ -23,40 +23,38 @@ public class ProxyServer {
 
     static class RootHandler implements HttpHandler {
         public void handle(HttpExchange exchange) throws IOException {
-
-            //getting request info
-            URI uri = exchange.getRequestURI();
-            Headers headers = exchange.getRequestHeaders();
+            URL url = exchange.getRequestURI().toURL();
             String method = exchange.getRequestMethod();
+            System.out.println(url.toString() + " " + method);
 
-
-            //URL url = new URL(uri.toString());
-            URL url = new URL("http://wp.pl");
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
-            //set up connection properties
             connection.setAllowUserInteraction(true);
             connection.setDoInput(true);
             connection.setDoOutput(true);
             connection.setUseCaches(false);
-            //connection.setFollowRedirects(true);
+            connection.setFollowRedirects(false);
             connection.setRequestMethod(method);
+
+            Headers headers = exchange.getRequestHeaders();
 
             for (String headerName : headers.keySet()){
                 for (String headerValue : headers.get(headerName)){
-                    connection.addRequestProperty(headerName, headerValue);
+                    connection.setRequestProperty(headerName, headerValue);
+//                    System.out.println(headerName + " " + headerValue);
                 }
             }
 
             if (exchange.getRequestHeaders().containsKey("Content-Length")) {
                 if (Integer.parseInt(exchange.getRequestHeaders().get("Content-Length").get(0))>=0) {
                     IOUtils.copy(exchange.getRequestBody(), connection.getOutputStream());
+                    System.out.println(exchange.getRequestBody());
                 }
             }
 
-            //connecting
             connection.connect();
-            System.out.println("Connecting...");
+            System.out.println("Start connect to " + url.toString());
+
 
             //getting the response
             //headers
@@ -79,7 +77,9 @@ public class ProxyServer {
             catch (Exception e) {
                 e.printStackTrace();
             }
-            System.out.println("content length: "+contentLength);
+
+            System.out.println(connection.getResponseCode());
+            System.out.println(connection.getInputStream());
 
             exchange.sendResponseHeaders(connection.getResponseCode(), contentLength);
             System.out.println(connection.getResponseCode());
@@ -92,6 +92,9 @@ public class ProxyServer {
             }
             connection.getInputStream().close();
             exchange.getResponseBody().close();
+            connection.disconnect();
+            exchange.close();
+
         }
     }
 }
