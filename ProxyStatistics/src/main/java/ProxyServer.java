@@ -14,6 +14,9 @@ import java.util.List;
 import java.util.Map;
 
 public class ProxyServer {
+
+    public static BlackList blackList = new BlackList();
+
     public static void main(String[] args) throws Exception {
         int port = 8000;
         HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
@@ -108,23 +111,33 @@ public class ProxyServer {
         }
 
         public void handle(HttpExchange exchange) throws IOException {
-
             try {
-                // establish connection with a server
-                setConnection(exchange);
+                if (!blackList.checkUrl(exchange.getRequestURI().toURL().getHost())) {
+                    // establish connection with a server
+                    setConnection(exchange);
 
-                byte[] requestBytes = readAllBytes(exchange.getRequestBody());
+                    byte[] requestBytes = readAllBytes(exchange.getRequestBody());
 
-                // when some body data write them
-                if (!exchange.getRequestMethod().equals("GET")) {
-                    connection.setDoOutput(true);
-                    OutputStream os = connection.getOutputStream();
-                    os.write(requestBytes);
+                    // when some body data write them
+                    if (!exchange.getRequestMethod().equals("GET")) {
+                        connection.setDoOutput(true);
+                        OutputStream os = connection.getOutputStream();
+                        os.write(requestBytes);
+                        os.close();
+                    }
+
+                    // write response from a server back to user
+                    writeRecievedResponse(exchange);
+                } else {
+                    String response = "BLACK LISTED PAGE !!!";
+
+                    System.out.println("BLACK LIST REQUEST !!!");
+
+                    exchange.sendResponseHeaders(403, response.getBytes().length);
+                    OutputStream os = exchange.getResponseBody();
+                    os.write(response.getBytes());
                     os.close();
                 }
-
-                // write response from a server back to user
-                writeRecievedResponse(exchange);
 
             } catch (Exception e) {
                 e.printStackTrace();
