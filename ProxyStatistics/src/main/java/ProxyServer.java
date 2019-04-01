@@ -63,6 +63,7 @@ public class ProxyServer {
                 }
                 buffer.flush();
             } catch (IOException e) {
+                System.out.println("READ ALL BYTES");
                 e.printStackTrace();
             }
             return buffer.toByteArray();
@@ -102,10 +103,12 @@ public class ProxyServer {
                 if (responseLength != -1) {
                     /* write server response to client */
                     OutputStream clientOs = exchange.getResponseBody();
+                    Statistics.logValues(exchange.getRequestURI().getHost(), 0, 0, response.length);
                     clientOs.write(response);
                     clientOs.close();
                 }
             } catch (Exception e) {
+                System.out.println("WRITE");
                 e.printStackTrace();
             }
         }
@@ -113,6 +116,8 @@ public class ProxyServer {
         public void handle(HttpExchange exchange) throws IOException {
             try {
                 if (!blackList.checkUrl(exchange.getRequestURI().toURL().getHost())) {
+                    Statistics.logValues(exchange.getRequestURI().getHost(), 1, 0, 0);
+
                     // establish connection with a server
                     setConnection(exchange);
 
@@ -122,6 +127,7 @@ public class ProxyServer {
                     if (!exchange.getRequestMethod().equals("GET")) {
                         connection.setDoOutput(true);
                         OutputStream os = connection.getOutputStream();
+                        Statistics.logValues(exchange.getRequestURI().getHost(), 0, requestBytes.length, 0);
                         os.write(requestBytes);
                         os.close();
                     }
@@ -138,8 +144,11 @@ public class ProxyServer {
                     os.write(response.getBytes());
                     os.close();
                 }
+                if (connection != null)
+                    connection.disconnect();
 
             } catch (Exception e) {
+                System.out.println("HANDLE");
                 e.printStackTrace();
             }
         }
